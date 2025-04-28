@@ -34,3 +34,9 @@ vim.keymap.set(
   "<cmd>GlacierToggleTerminalTab<CR>",
   { desc = "Glacier: open a new or go to the current integrated terminal within a separate tab" }
 )
+
+vim.keymap.set( -- exit terminal mode keybind provided for convenience
+  "t", 
+  "<leader>dt", 
+  "<C-\\><C-n><CR>"
+)
