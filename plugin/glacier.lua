@@ -18,25 +18,26 @@ vim.keymap.set(
   "n",
   "<leader>t<CR>",
   "<cmd>GlacierToggleTerminalCurrentWin<CR>",
-  { desc = "Glacier: toggle the integrated terminal within the current window" }
+  { desc = "Glacier: toggle the integrated terminal within the current window" },
 )
 
 vim.keymap.set(
   "n",
   "<leader>tb",
   "<cmd>GlacierToggleTerminalBottomWin<CR>",
-  { desc = "Glacier: toggle the integrated terminal in a separate bottom window (VSCode / IDE style)" }
+  { desc = "Glacier: toggle the integrated terminal in a separate bottom window" },
 )
 
 vim.keymap.set(
   "n",
   "<leader>tr",
   "<cmd>GlacierToggleTerminalTab<CR>",
-  { desc = "Glacier: open a new or go to the current integrated terminal within a separate tab" }
+  { desc = "Glacier: open a new or go to the current integrated terminal within a separate tab" },
 )
 
-vim.keymap.set( -- exit terminal mode keybind provided for convenience
+vim.keymap.set(
   "t", 
-  "<leader>dt", 
-  "<C-\\><C-n><CR>"
+  "<C-;>", 
+  "<C-\\><C-n><cr>",
+  { desc = "Glacier: exit terminal mode" },
 )
