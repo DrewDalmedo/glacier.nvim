@@ -89,6 +89,25 @@ local function reduce_indent(indent, amount)
   return trimmed
 end
 
+local function schedule_line_update(row, new_line, col)
+  local buf = api.nvim_get_current_buf()
+  local win = api.nvim_get_current_win()
+  local replacement = new_line or ''
+  local target_col = col or 0
+
+  vim.schedule(function()
+    if not api.nvim_buf_is_valid(buf) then
+      return
+    end
+
+    api.nvim_buf_set_lines(buf, row - 1, row, true, { replacement })
+
+    if api.nvim_win_is_valid(win) and api.nvim_win_get_buf(win) == buf then
+      api.nvim_win_set_cursor(win, { row, target_col })
+    end
+  end)
+end
+
 local function handle_insert_enter()
   local cursor = api.nvim_win_get_cursor(0)
   local row = cursor[1]
@@ -102,13 +121,11 @@ local function handle_insert_enter()
     if info.indent_width > 0 then
       local new_indent = reduce_indent(info.indent, info.shiftwidth)
       local new_line = new_indent .. info.bullet .. bullet_space(info)
-      api.nvim_set_current_line(new_line)
-      api.nvim_win_set_cursor(0, { row, #new_line })
+      schedule_line_update(row, new_line, #new_line)
       return ''
     end
 
-    api.nvim_set_current_line('')
-    api.nvim_win_set_cursor(0, { row, 0 })
+    schedule_line_update(row, '', 0)
     return ''
   end
 
@@ -159,9 +176,8 @@ local function handle_insert_tab()
   local sw = info.shiftwidth
   local new_indent = (info.indent or '') .. string.rep(' ', sw)
   local new_line = new_indent .. info.bullet .. bullet_space(info)
-  api.nvim_set_current_line(new_line)
   local row = api.nvim_win_get_cursor(0)[1]
-  api.nvim_win_set_cursor(0, { row, #new_line })
+  schedule_line_update(row, new_line, #new_line)
   return ''
 end
 
