@@ -82,7 +82,7 @@ function M.setup()
         end
 
         if parts.rest:match('%S') then
-          feed('<CR>' .. build_bullet(parts.indent, parts.bullet))
+          feed('<CR>')
           return
         end
 
@@ -136,33 +136,6 @@ function M.setup()
         desc = 'Indent Typst list item',
       })
 
-      vim.keymap.set('n', 'o', function()
-        local parts = parse_bullet(vim.api.nvim_get_current_line())
-        if parts then
-          return 'o' .. build_bullet(parts.indent, parts.bullet)
-        end
-        return 'o'
-      end, {
-        buffer = true,
-        expr = true,
-        desc = 'Smart o for lists',
-      })
-
-      vim.keymap.set('n', 'O', function()
-        local row = vim.api.nvim_win_get_cursor(0)[1]
-        local prev = vim.api.nvim_buf_get_lines(0, row - 2, row - 1, false)[1]
-        if prev then
-          local parts = parse_bullet(prev)
-          if parts then
-            return 'O' .. build_bullet(parts.indent, parts.bullet)
-          end
-        end
-        return 'O'
-      end, {
-        buffer = true,
-        expr = true,
-        desc = 'Smart O for lists',
-      })
     end,
   })
 end
