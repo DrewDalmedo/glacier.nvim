@@ -16,34 +16,50 @@ local function get_shiftwidth()
   return sw
 end
 
+local function indent_for_level(level, shiftwidth)
+  if not level or level <= 0 then
+    return ''
+  end
+  return string.rep(' ', level * shiftwidth)
+end
+
 local function parse_line(line)
   local indent = line:match('^(%s*)') or ''
   local indent_width = vim.fn.strdisplaywidth(indent)
+  local shiftwidth = get_shiftwidth()
   local indent_part, bullet, rest = line:match('^(%s*)([%-+])(.*)$')
 
   if indent_part then
     local after_spaces = rest:match('^(%s+)') or ''
+    local level = 0
+    if indent_width > 0 then
+      level = math.floor((indent_width + shiftwidth - 1) / shiftwidth)
+    end
     return {
       indent = indent_part,
       indent_width = indent_width,
+      indent_level = level,
+      normalized_indent = indent_for_level(level, shiftwidth),
       bullet = bullet,
       rest = rest,
       space_after_bullet = after_spaces,
       is_list_item = true,
       is_empty_bullet = rest:match('^%s*$') ~= nil,
-      shiftwidth = get_shiftwidth(),
+      shiftwidth = shiftwidth,
     }
   end
 
   return {
     indent = indent,
     indent_width = indent_width,
+    indent_level = math.floor(indent_width / shiftwidth),
+    normalized_indent = indent,
     bullet = nil,
     rest = nil,
     space_after_bullet = '',
     is_list_item = false,
     is_empty_bullet = false,
-    shiftwidth = get_shiftwidth(),
+    shiftwidth = shiftwidth,
   }
 end
 
@@ -56,37 +72,8 @@ local function bullet_space(info)
 end
 
 local function bullet_prefix(info)
-  return (info.indent or '') .. info.bullet .. bullet_space(info)
-end
-
-local function reduce_indent(indent, amount)
-  if not indent or indent == '' then
-    return ''
-  end
-  if not amount or amount <= 0 then
-    return indent
-  end
-
-  local width = vim.fn.strdisplaywidth(indent)
-  local target = width - amount
-  if target <= 0 then
-    return ''
-  end
-
-  local trimmed = indent
-  while width > target and #trimmed > 0 do
-    local shortened = trimmed:sub(1, #trimmed - 1)
-    local shortened_width = vim.fn.strdisplaywidth(shortened)
-    if shortened_width < target then
-      trimmed = shortened .. string.rep(' ', target - shortened_width)
-      width = target
-      break
-    end
-    trimmed = shortened
-    width = shortened_width
-  end
-
-  return trimmed
+  local indent = info.normalized_indent or info.indent or ''
+  return indent .. info.bullet .. bullet_space(info)
 end
 
 local function schedule_line_update(row, new_line, col)
@@ -118,8 +105,8 @@ local function handle_insert_enter()
   end
 
   if info.is_empty_bullet then
-    if info.indent_width > 0 then
-      local new_indent = reduce_indent(info.indent, info.shiftwidth)
+    if info.indent_level > 0 then
+      local new_indent = indent_for_level(info.indent_level - 1, info.shiftwidth)
       local new_line = new_indent .. info.bullet .. bullet_space(info)
       schedule_line_update(row, new_line, #new_line)
       return ''
@@ -174,7 +161,7 @@ local function handle_insert_tab()
   end
 
   local sw = info.shiftwidth
-  local new_indent = (info.indent or '') .. string.rep(' ', sw)
+  local new_indent = indent_for_level(info.indent_level + 1, sw)
   local new_line = new_indent .. info.bullet .. bullet_space(info)
   local row = api.nvim_win_get_cursor(0)[1]
   schedule_line_update(row, new_line, #new_line)
