@@ -42,7 +42,8 @@ function M.setup()
             return '<Esc><<A'
           end
           -- Remove the bullet when already at the left-most position
-          return '<C-u>'
+          -- and leave the cursor at column 0 in insert mode
+          return '<Esc>0"_C'
         elseif starts_with_bullet(line) then
           local bullet = get_bullet_type(line) or '-'
           return '<CR>' .. bullet .. ' '
