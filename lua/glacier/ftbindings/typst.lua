@@ -17,23 +17,26 @@ local function is_empty_bullet(line)
   return line:match("^%s*[%-+]%s*$") ~= nil and starts_with_bullet(line)
 end
 
+local function get_leading_whitespace(line)
+  return line:match("^(%s*)") or ""
+end
+
 function M.setup()
   vim.api.nvim_create_autocmd('FileType', {
     pattern = 'typst',
     callback = function()
-      vim.keymap.set('v', '<C-b>', 'x<esc>i**<esc>P', { 
-        noremap = true, 
-        silent = true,
-        buffer = true,
-        desc = "Add asterisks around word"
-      })
-
       -- Handle Enter in insert mode
       vim.keymap.set('i', '<CR>', function()
         local line = vim.api.nvim_get_current_line()
         if is_empty_bullet(line) then
-          -- Clear the current line and move to next line
-          return '<C-u><CR>'
+          local indent = get_leading_whitespace(line)
+          if #indent > 0 then
+            -- Dedent the current bullet by one level and remain in insert mode
+            return '<Esc><<A'
+          end
+          -- Remove the bullet when already at the left-most position
+          -- while keeping the deletion in insert mode
+          return '<C-u>'
         elseif starts_with_bullet(line) then
           local bullet = get_bullet_type(line) or '-'
           return '<CR>' .. bullet .. ' '
